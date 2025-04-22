@@ -1,5 +1,5 @@
 const config = {
-  name: 'Coinbase Blog',
+  name: 'coinbase',
   blogUrl: 'https://www.coinbase.com/en-sg/blog/landing',
   indexPage: '/',
   userAgent:

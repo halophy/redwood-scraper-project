@@ -4,19 +4,11 @@ import puppeteer from 'puppeteer-extra'
 import StealthPlugin from 'puppeteer-extra-plugin-stealth'
 
 import { getRandomProxy } from './proxyPool'
+import { IBlog } from './type'
 import { simulateHumanActions } from './utils'
 import { randomDelay, sleep } from './utils'
 
 puppeteer.use(StealthPlugin())
-
-export interface IBlog {
-  name: string
-  blogUrl: string
-  indexPage: string
-  userAgent: string
-  _id: string
-  articleLinkSelector: string
-}
 
 export default async function scrapeBlog(
   config: IBlog,

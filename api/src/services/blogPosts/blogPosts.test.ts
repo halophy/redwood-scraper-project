@@ -1,59 +1,51 @@
-import type { BlogPost } from '@prisma/client'
+import { db } from 'src/lib/db'
 
-import {
-  blogPosts,
-  blogPost,
-  createBlogPost,
-  updateBlogPost,
-  deleteBlogPost,
-} from './blogPosts'
+import { blogPosts, scrapeCoinbaseBlog } from './blogPosts'
 import type { StandardScenario } from './blogPosts.scenarios'
 
-// Generated boilerplate tests do not account for all circumstances
-// and can fail without adjustments, e.g. Float.
-//           Please refer to the RedwoodJS Testing Docs:
-//       https://redwoodjs.com/docs/testing#testing-services
-// https://redwoodjs.com/docs/testing#jest-expect-type-considerations
+describe('blogPosts service', () => {
+  scenario(
+    'returns posts with pagination and optional source',
+    async (scenario: StandardScenario) => {
+      const result = await blogPosts({
+        source: 'coinbase',
+        offset: 0,
+        limit: 10,
+      })
 
-describe('blogPosts', () => {
-  scenario('returns all blogPosts', async (scenario: StandardScenario) => {
-    const result = await blogPosts()
+      expect(result.posts.length).toBe(2)
+      expect(result.totalCount).toBe(2)
+      expect(result.posts[0]).toHaveProperty('url')
+    }
+  )
+})
 
-    expect(result.length).toEqual(Object.keys(scenario.blogPost).length)
-  })
+describe('scrapeCoinbaseBlog service', () => {
+  it('scrapes blog links and stores non-duplicate URLs', async () => {
+    // mock scrapeBlog 方法返回模拟链接
+    const scrapeMock = vi
+      .fn()
+      .mockResolvedValue([
+        'https://example.com/new1',
+        'https://example.com/new2',
+      ])
 
-  scenario('returns a single blogPost', async (scenario: StandardScenario) => {
-    const result = await blogPost({ id: scenario.blogPost.one.id })
+    const original = require('src/scraper/run')
+    original.scrapeCoinbaseBlog = scrapeMock
 
-    expect(result).toEqual(scenario.blogPost.one)
-  })
+    const result = await scrapeCoinbaseBlog({ source: 'coinbase' })
+    expect(result).toBe(true)
 
-  scenario('creates a blogPost', async () => {
-    const result = await createBlogPost({
-      input: { url: 'String9565588' },
+    const stored = await db.blogPost.findMany({
+      where: { source: 'coinbase' },
     })
 
-    expect(result.url).toEqual('String9565588')
-  })
-
-  scenario('updates a blogPost', async (scenario: StandardScenario) => {
-    const original = (await blogPost({
-      id: scenario.blogPost.one.id,
-    })) as BlogPost
-    const result = await updateBlogPost({
-      id: original.id,
-      input: { url: 'String4440112' },
-    })
-
-    expect(result.url).toEqual('String4440112')
-  })
-
-  scenario('deletes a blogPost', async (scenario: StandardScenario) => {
-    const original = (await deleteBlogPost({
-      id: scenario.blogPost.one.id,
-    })) as BlogPost
-    const result = await blogPost({ id: original.id })
-
-    expect(result).toEqual(null)
+    const urls = stored.map((p) => p.url)
+    expect(urls).toEqual(
+      expect.arrayContaining([
+        'https://example.com/new1',
+        'https://example.com/new2',
+      ])
+    )
   })
 })

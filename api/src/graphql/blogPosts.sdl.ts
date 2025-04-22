@@ -2,6 +2,7 @@ export const schema = gql`
   type BlogPost {
     id: Int!
     url: String!
+    source: String!
     createdAt: DateTime!
   }
 
@@ -11,10 +12,11 @@ export const schema = gql`
   }
 
   type Query {
-    blogPosts(offset: Int!, limit: Int!): BlogPostPage! @skipAuth
+    blogPosts(source: String, offset: Int!, limit: Int!): BlogPostPage!
+      @skipAuth
   }
 
   type Mutation {
-    scrapeCoinbaseBlog(limit: Int): Boolean! @skipAuth
+    scrapeCoinbaseBlog(source: String!, limit: Int): Boolean! @skipAuth
   }
 `

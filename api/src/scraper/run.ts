@@ -3,7 +3,10 @@ import 'dotenv/config'
 // import cron from 'node-cron'
 
 import scrapeBlog from './scraper'
-import config from './sites/coinbase.config'
+import coinbase from './sites/coinbase.config'
+import { IBlog } from './type'
+
+const configs: IBlog[] = [coinbase]
 
 async function showMoreCoinbase(page) {
   // 处理点击“Show More”按钮
@@ -28,17 +31,11 @@ async function showMoreCoinbase(page) {
   })
 }
 
-export async function scrapeCoinbaseBlog(limit: number) {
+export async function scrapeCoinbaseBlog(source: string, limit: number) {
   let blogLinks = []
+  const [config] = configs.filter((item) => item.name === source)
   try {
     blogLinks = await scrapeBlog(config, null, limit, showMoreCoinbase)
-    // for (const url of blogLinks) {
-    //   await db.blogPost.upsert({
-    //     where: { url },
-    //     update: {},
-    //     create: { url },
-    //   })
-    // }
   } catch (err) {
     console.error(
       `[${new Date().toISOString()}] Error scraping Coinbase Blog:`,
