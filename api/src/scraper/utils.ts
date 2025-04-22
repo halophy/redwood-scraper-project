@@ -15,25 +15,5 @@ export async function simulateHumanActions(page: Page) {
   await page.mouse.move(randomCoord(), randomCoord())
   await page.keyboard.press('ArrowDown')
   await sleep(randomDelay())
-  await autoScroll(page)
-}
-
-async function autoScroll(page: Page) {
-  await page.evaluate(async () => {
-    await new Promise<void>((resolve) => {
-      let totalHeight = 0
-      const distance = 100
-      const timer = setInterval(
-        () => {
-          window.scrollBy(0, distance)
-          totalHeight += distance
-          if (totalHeight >= document.body.scrollHeight) {
-            clearInterval(timer)
-            resolve()
-          }
-        },
-        200 + Math.random() * 100
-      )
-    })
-  })
+  await page.mouse.move(randomCoord(), randomCoord())
 }
