@@ -10,6 +10,8 @@ import { randomDelay, sleep } from './utils'
 
 puppeteer.use(StealthPlugin())
 
+const isCI = process.env.CI === 'true'
+
 export default async function scrapeBlogWithConfig(
   config: IBlog,
   existingPage: Page | null = null,
@@ -18,13 +20,13 @@ export default async function scrapeBlogWithConfig(
 ) {
   const proxyUrl = await getRandomProxy()
 
-  let launchOptions = {}
+  const launchOptions = {
+    args: isCI ? ['--no-sandbox', '--disable-setuid-sandbox'] : [],
+  }
 
   if (proxyUrl) {
     const anonymizedProxy = await proxyChain.anonymizeProxy(proxyUrl)
-    launchOptions = {
-      args: [`--proxy-server=${anonymizedProxy}`],
-    }
+    launchOptions.args.push(`--proxy-server=${anonymizedProxy}`)
   }
 
   const browser = existingPage ? null : await puppeteer.launch(launchOptions)
