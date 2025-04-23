@@ -48,5 +48,3 @@ export async function scrapeBlogBySource(source: string, limit: number) {
   }
   return blogLinks
 }
-
-console.log(scrapeBlogBySource('coinbase', 20))

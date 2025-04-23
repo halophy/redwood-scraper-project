@@ -21,6 +21,7 @@ export default async function scrapeBlogWithConfig(
   const proxyUrl = await getRandomProxy()
 
   const launchOptions = {
+    headless: false, // 显示浏览器窗口，模拟更像人类操作
     args: isCI ? ['--no-sandbox', '--disable-setuid-sandbox'] : [],
   }
 
@@ -54,7 +55,9 @@ export default async function scrapeBlogWithConfig(
       }, config)
 
       const prevCount = blogLinksSet.size
-      newLinks.forEach((link) => blogLinksSet.add(link))
+      for (const link of newLinks) {
+        blogLinksSet.add(link)
+      }
       const addedCount = blogLinksSet.size - prevCount
 
       console.log(
@@ -71,10 +74,10 @@ export default async function scrapeBlogWithConfig(
       break
     }
   }
-
   if (!existingPage) {
     await page.close()
     await browser?.close()
+    console.log('[INFO] Browser closed')
   }
 
   const blogLinks = Array.from(blogLinksSet)
