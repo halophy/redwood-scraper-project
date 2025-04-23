@@ -10,5 +10,5 @@ describe('scrapeBlogBySource', () => {
       expect(post.url).toMatch(/^https:\/\/www\.coinbase\.com\/.+/)
       expect(post.source).toBe('coinbase')
     }
-  })
+  }, 45000)
 })
