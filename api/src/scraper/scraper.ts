@@ -21,7 +21,7 @@ export default async function scrapeBlogWithConfig(
   const proxyUrl = await getRandomProxy()
 
   const launchOptions = {
-    headless: false, // 显示浏览器窗口，模拟更像人类操作
+    // headless: false, // 显示浏览器窗口，模拟更像人类操作
     args: isCI ? ['--no-sandbox', '--disable-setuid-sandbox'] : [],
   }
 
