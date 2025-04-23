@@ -1,8 +1,6 @@
 import 'dotenv/config'
-// import { db } from 'src/lib/db'
-// import cron from 'node-cron'
 
-import scrapeBlog from './scraper'
+import scrapeBlogWithConfig from './scraper'
 import coinbase from './sites/coinbase.config'
 import { IBlog } from './type'
 
@@ -31,11 +29,17 @@ async function showMoreCoinbase(page) {
   })
 }
 
-export async function scrapeCoinbaseBlog(source: string, limit: number) {
+export async function scrapeBlogBySource(source: string, limit: number) {
   let blogLinks = []
   const [config] = configs.filter((item) => item.name === source)
   try {
-    blogLinks = await scrapeBlog(config, null, limit, showMoreCoinbase)
+    console.log(`trying to scrape ${source}, number: ${limit}`)
+    blogLinks = await scrapeBlogWithConfig(
+      config,
+      null,
+      limit,
+      showMoreCoinbase
+    )
   } catch (err) {
     console.error(
       `[${new Date().toISOString()}] Error scraping Coinbase Blog:`,
@@ -45,11 +49,4 @@ export async function scrapeCoinbaseBlog(source: string, limit: number) {
   return blogLinks
 }
 
-// // 每 10 分钟执行一次
-// cron.schedule('*/10 * * * *', async () => {
-//   console.log(`[${new Date().toISOString()}] Running scheduled scraper...`)
-//   await scrapeCoinbaseBlog(20)
-// })
-
-// // 启动脚本时先跑一次
-// scrapeCoinbaseBlog(20)
+console.log(scrapeBlogBySource('coinbase', 20))

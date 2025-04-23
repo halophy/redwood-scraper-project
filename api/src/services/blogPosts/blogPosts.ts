@@ -1,5 +1,5 @@
 import { db } from 'src/lib/db'
-import { scrapeCoinbaseBlog as scrapeBlog } from 'src/scraper/run'
+import { scrapeBlogBySource } from 'src/scraper/run'
 
 export const blogPosts = async ({
   source,
@@ -12,7 +12,8 @@ export const blogPosts = async ({
 }) => {
   const whereClause = source ? { source } : {}
 
-  const [posts, totalCount] = await Promise.all([
+  // 第一次查询数据库
+  let [posts, totalCount] = await Promise.all([
     db.blogPost.findMany({
       where: whereClause,
       skip: offset,
@@ -21,6 +22,32 @@ export const blogPosts = async ({
     }),
     db.blogPost.count({ where: whereClause }),
   ])
+
+  // 如果请求超出当前总数，自动触发爬虫
+  if (offset + limit > totalCount) {
+    console.log(
+      `[server] offset(${offset}) + limit(${limit}) 超出总数(${totalCount})，尝试动态爬取`
+    )
+    try {
+      await scrapeBlogSaveLinks(source || 'coinbase', offset + limit) // 默认抓 coinbase
+    } catch (e) {
+      console.error('自动爬取失败:', e)
+    }
+
+    // 等待新数据写入后重新查询
+    const updated = await Promise.all([
+      db.blogPost.findMany({
+        where: whereClause,
+        skip: offset,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+      }),
+      db.blogPost.count({ where: whereClause }),
+    ])
+
+    posts = updated[0]
+    totalCount = updated[1]
+  }
 
   return { posts, totalCount }
 }
@@ -52,15 +79,9 @@ const saveBlogLinks = async (links: string[], source: string) => {
   })
 }
 
-export const scrapeCoinbaseBlog = async ({
-  source,
-  limit,
-}: {
-  source: string
-  limit?: number
-}) => {
+export const scrapeBlogSaveLinks = async (source: string, limit: number) => {
   try {
-    const blogLinks = await scrapeBlog(source, limit || 20)
+    const blogLinks = await scrapeBlogBySource(source, limit)
     await saveBlogLinks(blogLinks, source)
     return true
   } catch (err) {

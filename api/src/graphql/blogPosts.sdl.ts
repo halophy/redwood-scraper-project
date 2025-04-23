@@ -17,6 +17,6 @@ export const schema = gql`
   }
 
   type Mutation {
-    scrapeCoinbaseBlog(source: String!, limit: Int): Boolean! @skipAuth
+    scrapeBlogSaveLinks(source: String!, limit: Int): Boolean! @skipAuth
   }
 `

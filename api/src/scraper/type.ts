@@ -3,6 +3,5 @@ export interface IBlog {
   blogUrl: string
   indexPage: string
   userAgent: string
-  _id: string
   articleLinkSelector: string
 }

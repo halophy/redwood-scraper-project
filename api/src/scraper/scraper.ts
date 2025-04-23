@@ -10,10 +10,10 @@ import { randomDelay, sleep } from './utils'
 
 puppeteer.use(StealthPlugin())
 
-export default async function scrapeBlog(
+export default async function scrapeBlogWithConfig(
   config: IBlog,
   existingPage: Page | null = null,
-  limit: number | null = null,
+  limit: number,
   showMoreHandler?: (page: Page) => Promise<void>
 ) {
   const proxyUrl = await getRandomProxy()
@@ -37,14 +37,11 @@ export default async function scrapeBlog(
   })
 
   const blogLinksSet = new Set<string>()
-  let attempts = 0
-  const maxAttempts = 2
 
-  while (attempts < maxAttempts) {
+  while (blogLinksSet.size < limit) {
     try {
       await simulateHumanActions(page)
 
-      // 尝试点击“Show More”
       if (showMoreHandler) {
         await showMoreHandler(page)
         await sleep(randomDelay())
@@ -55,29 +52,21 @@ export default async function scrapeBlog(
       }, config)
 
       const prevCount = blogLinksSet.size
-
       newLinks.forEach((link) => blogLinksSet.add(link))
-
       const addedCount = blogLinksSet.size - prevCount
-      console.log(`[INFO] Fetched ${addedCount} new links.`)
 
-      // 达到限制就退出
-      if (limit && blogLinksSet.size >= limit) {
-        break
-      }
+      console.log(
+        `[INFO] Added ${addedCount} new links. Total: ${blogLinksSet.size}`
+      )
 
-      // 如果没新内容，说明没有更多分页
+      // 如果这轮没有新增内容，说明已经没有更多可以加载的
       if (addedCount === 0) {
-        console.log(`[INFO] No more new content found, stopping.`)
+        console.log('[INFO] No more content to load.')
         break
       }
     } catch (err) {
-      console.error(`[${new Date().toISOString()}] Error during scraping:`, err)
-      attempts++
-      if (attempts < maxAttempts) {
-        console.log(`[${new Date().toISOString()}] Retrying...`)
-        continue
-      }
+      console.error(`[ERROR] Scraping failed:`, err)
+      break
     }
   }
 
@@ -86,10 +75,6 @@ export default async function scrapeBlog(
     await browser?.close()
   }
 
-  let blogLinks = Array.from(blogLinksSet)
-  if (limit) {
-    blogLinks = blogLinks.slice(0, limit)
-  }
-
-  return blogLinks
+  const blogLinks = Array.from(blogLinksSet)
+  return limit ? blogLinks.slice(0, limit) : blogLinks
 }
